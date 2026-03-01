@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
-import { Shield, Trophy, Swords, Globe, Ban } from 'lucide-react';
+import { Shield, Trophy, Swords, Globe, Ban, Lock } from 'lucide-react';
 
 interface Team {
   id: string;
@@ -17,8 +18,34 @@ const Admin = () => {
   const { isAdmin } = useAuth();
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState('');
+  const [roundVisibility, setRoundVisibility] = useState<Record<number, boolean>>({});
 
-  useEffect(() => { fetchTeams(); }, []);
+  useEffect(() => { fetchTeams(); fetchRoundVisibility(); }, []);
+
+  const fetchRoundVisibility = async () => {
+    const { data } = await supabase
+      .from('matches')
+      .select('round, is_visible')
+      .eq('tournament_type', 'league')
+      .not('round', 'is', null);
+    if (data) {
+      const vis: Record<number, boolean> = {};
+      data.forEach((m: any) => {
+        if (m.round != null) {
+          // A round is "visible" if any match in it is visible
+          if (vis[m.round] === undefined) vis[m.round] = m.is_visible;
+          else vis[m.round] = vis[m.round] || m.is_visible;
+        }
+      });
+      setRoundVisibility(vis);
+    }
+  };
+
+  const toggleRoundVisibility = async (round: number, visible: boolean) => {
+    await supabase.from('matches').update({ is_visible: visible }).eq('tournament_type', 'league').eq('round', round);
+    setRoundVisibility(prev => ({ ...prev, [round]: visible }));
+    toast.success(visible ? `تم فتح الجولة ${round}` : `تم إغلاق الجولة ${round}`);
+  };
 
   const fetchTeams = async () => {
     const { data } = await supabase.from('teams').select('*').order('name');
@@ -45,16 +72,17 @@ const Admin = () => {
 
       for (let round = 0; round < n - 1; round++) {
         const roundNum = round + 1;
+        const visible = roundNum === 1; // Only round 1 visible by default
         // First half
         const home = round % 2 === 0 ? fixed : rotating[0];
         const away = round % 2 === 0 ? rotating[0] : fixed;
-        matches.push({ home_team_id: home, away_team_id: away, tournament_type: 'league', round: roundNum, is_visible: true });
+        matches.push({ home_team_id: home, away_team_id: away, tournament_type: 'league', round: roundNum, is_visible: visible });
 
         for (let i = 1; i < rotating.length / 2 + 0.5; i++) {
           const h = rotating[i];
           const a = rotating[rotating.length - i];
           if (h && a) {
-            matches.push({ home_team_id: h, away_team_id: a, tournament_type: 'league', round: roundNum, is_visible: true });
+            matches.push({ home_team_id: h, away_team_id: a, tournament_type: 'league', round: roundNum, is_visible: visible });
           }
         }
 
@@ -68,7 +96,7 @@ const Admin = () => {
         away_team_id: m.home_team_id,
         tournament_type: 'league',
         round: m.round! + (n - 1),
-        is_visible: true,
+        is_visible: false,
       }));
 
       const allMatches = [...matches, ...secondLeg];
@@ -79,6 +107,7 @@ const Admin = () => {
       }
 
       toast.success(`تم إنشاء ${allMatches.length} مباراة دوري!`);
+      fetchRoundVisibility();
     } catch (e) {
       toast.error('خطأ في إنشاء الدوري');
     }
@@ -234,6 +263,28 @@ const Admin = () => {
           </Button>
         </div>
       </div>
+
+      {/* Round Visibility Control */}
+      {Object.keys(roundVisibility).length > 0 && (
+        <div className="space-y-3">
+          <h2 className="text-lg font-orbitron font-semibold text-foreground flex items-center gap-2">
+            <Lock className="w-5 h-5" /> تحكم الجولات
+          </h2>
+          <div className="glass-card p-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+              {Array.from({ length: 30 }, (_, i) => i + 1).filter(r => roundVisibility[r] !== undefined).map(round => (
+                <div key={round} className={`flex items-center justify-between gap-2 p-2 rounded-lg ${roundVisibility[round] ? 'bg-primary/10' : 'bg-muted/20'}`}>
+                  <span className="font-cairo text-sm">الجولة {round}</span>
+                  <Switch
+                    checked={roundVisibility[round] || false}
+                    onCheckedChange={(checked) => toggleRoundVisibility(round, checked)}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Teams Management */}
       <div className="space-y-3">
