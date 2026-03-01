@@ -90,6 +90,7 @@ const League = () => {
   const [standings, setStandings] = useState<TeamStanding[]>([]);
   const [selectedRound, setSelectedRound] = useState(1);
   const [scores, setScores] = useState<Record<string, { home: string; away: string }>>({});
+  const [roundVisibility, setRoundVisibility] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     fetchMatches();
@@ -97,15 +98,26 @@ const League = () => {
   }, []);
 
   const fetchMatches = async () => {
-    const { data } = await supabase
+    // Admin sees all matches, users only see visible ones
+    let query = supabase
       .from('matches')
       .select('*, home_team:teams!matches_home_team_id_fkey(name, logo_url), away_team:teams!matches_away_team_id_fkey(name, logo_url)')
       .eq('tournament_type', 'league')
-      .eq('is_visible', true)
       .order('round');
+    
+    const { data } = await query;
     if (data) {
       const parsed = data as unknown as Match[];
       setMatches(parsed);
+      // Build round visibility map
+      const vis: Record<number, boolean> = {};
+      parsed.forEach(m => {
+        if (m.round != null) {
+          if (vis[m.round] === undefined) vis[m.round] = m.is_visible;
+          else vis[m.round] = vis[m.round] || m.is_visible;
+        }
+      });
+      setRoundVisibility(vis);
       // Pre-fill scores for played matches
       const initial: Record<string, { home: string; away: string }> = {};
       parsed.forEach(m => {
@@ -207,50 +219,57 @@ const League = () => {
         {roundMatches.length === 0 && (
           <p className="text-muted-foreground font-cairo text-center py-8">لا توجد مباريات في هذه الجولة</p>
         )}
-        {roundMatches.map(match => (
-          <div key={match.id} className="glass-card p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 flex-1 justify-end">
-                <span className="font-cairo text-sm">{match.home_team?.name}</span>
-                <img src={match.home_team?.logo_url || ''} alt="" className="w-6 h-6 object-contain" />
-              </div>
-
-              {isAdmin ? (
-                <div className="flex items-center gap-2 px-4">
-                  <Input
-                    type="number"
-                    className="w-12 text-center bg-muted/50"
-                    min="0"
-                    value={scores[match.id]?.home ?? ''}
-                    onChange={e => setScores(p => ({ ...p, [match.id]: { ...p[match.id], home: e.target.value, away: p[match.id]?.away || '' } }))}
-                  />
-                  <span className="text-muted-foreground">-</span>
-                  <Input
-                    type="number"
-                    className="w-12 text-center bg-muted/50"
-                    min="0"
-                    value={scores[match.id]?.away ?? ''}
-                    onChange={e => setScores(p => ({ ...p, [match.id]: { ...p[match.id], away: e.target.value, home: p[match.id]?.home || '' } }))}
-                  />
-                  <Button size="sm" onClick={() => saveScore(match.id)} className="font-cairo">
-                    {match.is_played ? 'تعديل' : 'حفظ'}
-                  </Button>
+        {!isAdmin && !roundVisibility[selectedRound] ? (
+          <div className="glass-card p-8 text-center">
+            <p className="text-2xl mb-2">🔒</p>
+            <p className="font-cairo text-muted-foreground text-lg">الجولة {selectedRound} مغلقة - بانتظار إشارة المنظم</p>
+          </div>
+        ) : (
+          roundMatches.map(match => (
+            <div key={match.id} className="glass-card p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 flex-1 justify-end">
+                  <span className="font-cairo text-sm">{match.home_team?.name}</span>
+                  <img src={match.home_team?.logo_url || ''} alt="" className="w-6 h-6 object-contain" />
                 </div>
-              ) : match.is_played ? (
-                <div className="px-4 font-orbitron font-bold text-primary text-lg">
-                  {match.home_score} - {match.away_score}
-                </div>
-              ) : (
-                <div className="px-4 text-muted-foreground font-orbitron">vs</div>
-              )}
 
-              <div className="flex items-center gap-2 flex-1">
-                <img src={match.away_team?.logo_url || ''} alt="" className="w-6 h-6 object-contain" />
-                <span className="font-cairo text-sm">{match.away_team?.name}</span>
+                {isAdmin ? (
+                  <div className="flex items-center gap-2 px-4">
+                    <Input
+                      type="number"
+                      className="w-12 text-center bg-muted/50"
+                      min="0"
+                      value={scores[match.id]?.home ?? ''}
+                      onChange={e => setScores(p => ({ ...p, [match.id]: { ...p[match.id], home: e.target.value, away: p[match.id]?.away || '' } }))}
+                    />
+                    <span className="text-muted-foreground">-</span>
+                    <Input
+                      type="number"
+                      className="w-12 text-center bg-muted/50"
+                      min="0"
+                      value={scores[match.id]?.away ?? ''}
+                      onChange={e => setScores(p => ({ ...p, [match.id]: { ...p[match.id], away: e.target.value, home: p[match.id]?.home || '' } }))}
+                    />
+                    <Button size="sm" onClick={() => saveScore(match.id)} className="font-cairo">
+                      {match.is_played ? 'تعديل' : 'حفظ'}
+                    </Button>
+                  </div>
+                ) : match.is_played ? (
+                  <div className="px-4 font-orbitron font-bold text-primary text-lg">
+                    {match.home_score} - {match.away_score}
+                  </div>
+                ) : (
+                  <div className="px-4 text-muted-foreground font-orbitron">vs</div>
+                )}
+
+                <div className="flex items-center gap-2 flex-1">
+                  <img src={match.away_team?.logo_url || ''} alt="" className="w-6 h-6 object-contain" />
+                  <span className="font-cairo text-sm">{match.away_team?.name}</span>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );
