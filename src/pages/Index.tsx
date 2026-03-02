@@ -48,7 +48,17 @@ const Index = () => {
         .limit(6),
     ]);
 
-    if (teamsRes.data) setStandings(teamsRes.data as TeamStanding[]);
+    if (teamsRes.data) {
+      const sorted = [...teamsRes.data].sort((a, b) => {
+        if (b.points !== a.points) return b.points - a.points;
+        const gdA = a.goals_for - a.goals_against;
+        const gdB = b.goals_for - b.goals_against;
+        if (gdB !== gdA) return gdB - gdA;
+        if (b.goals_for !== a.goals_for) return b.goals_for - a.goals_for;
+        return a.goals_against - b.goals_against;
+      });
+      setStandings(sorted as TeamStanding[]);
+    }
     if (matchesRes.data) setRecentMatches(matchesRes.data as unknown as Match[]);
   };
 
