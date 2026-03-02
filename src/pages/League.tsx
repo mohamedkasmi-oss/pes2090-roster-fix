@@ -130,8 +130,20 @@ const League = () => {
   };
 
   const fetchStandings = async () => {
-    const { data } = await supabase.from('teams').select('*').order('points', { ascending: false });
-    if (data) setStandings(data.map(t => ({ ...t, played: t.wins + t.draws + t.losses })) as TeamStanding[]);
+    const { data } = await supabase.from('teams').select('*');
+    if (data) {
+      const sorted = data
+        .map(t => ({ ...t, played: t.wins + t.draws + t.losses }))
+        .sort((a, b) => {
+          if (b.points !== a.points) return b.points - a.points;
+          const gdA = a.goals_for - a.goals_against;
+          const gdB = b.goals_for - b.goals_against;
+          if (gdB !== gdA) return gdB - gdA;
+          if (b.goals_for !== a.goals_for) return b.goals_for - a.goals_for;
+          return a.goals_against - b.goals_against;
+        });
+      setStandings(sorted as TeamStanding[]);
+    }
   };
 
   const rounds = [...new Set(matches.map(m => m.round))].sort((a, b) => (a || 0) - (b || 0));
