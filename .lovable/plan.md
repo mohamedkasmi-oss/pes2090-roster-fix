@@ -1,65 +1,51 @@
+# بطولة جديدة — 12 فريق
 
+## 1. الفرق (12)
+| المدرب | الفريق | كود الدخول |
+|---|---|---|
+| مجيد | تشيلسي | MAJ2026 |
+| أيمن | ريال مدريد | AYM2026 |
+| مهدي مسلغي | أرسنال | MAH2026 |
+| محمد سحيتيت | أجاكس أمستردام | SAH2026 |
+| زكرياء | مانشستر يونايتد | ZAK2026 |
+| عبد الحق | برشلونة | HAQ2026 |
+| دريس | إنتر ميلان | DRI2026 |
+| وليد | باريس سان جيرمان | WAL2026 |
+| سمحمد قاسمي | آس ميلان | SMQ2026 |
+| محمد قاسمي | أتلتيكو مدريد | MOQ2026 |
+| أيوب | ليفربول | AYO2026 |
+| حسين | مانشستر سيتي | HUS2026 |
 
-# PES 2090 Universe — Implementation Plan
+الأدمن `KAS2026` يبقى كما هو.
 
-## 1. Setup Lovable Cloud Backend
-- Create database tables: `teams`, `matches`, `news`, `chat_messages`, `challenges`, `app_settings`
-- Enable RLS policies for all tables
-- Create storage bucket for chat image uploads
-- Seed the **16 correct teams** with exact names, coaches, access codes, and logo URLs
+## 2. الصيغة
+- **مجموعات**: 3 مجموعات (A, B, C) × 4 فرق، ذهاب وإياب = 12 مباراة لكل مجموعة، 36 مباراة إجمالاً، 6 جولات.
+- **التأهل**: أول وثاني كل مجموعة (6) + أفضل ثالثين (2) = 8 فرق.
+- **الإقصائيات**: ربع نهائي → نصف نهائي → نهائي (مباراة واحدة لكل دور).
 
-## 2. Authentication System (Access Code Login)
-- Login page where coaches enter their team access code
-- No email/password — just code-based entry
-- Store logged-in team in app state
-- **Ban system**: If team `is_suspended = true`, show full red screen blocking access
+التوزيع على المجموعات يتم بالقرعة العشوائية عند إنشاء البطولة.
 
-## 3. Admin Panel (KAS2026 Only)
-- **League Generator**: Fetch all 16 teams, generate 30-round double round-robin (Berger algorithm), save all matches
-- **Cup Generator**: 
-  - Round of 16: randomly pair 16 teams into 8 matches
-  - Quarter-finals, Semi-finals, Final: pull winners from previous round
-- **UCL Groups**: Shuffle 16 teams into 4 groups (A–D), generate group stage matches
-- **Score Input**: Admin can enter match scores on the scoreboard
-- **Team Suspension**: Toggle ban status for any team
+## 3. تغييرات البيانات
+- **حذف** كل: `matches`, `challenges`, `chat_messages`, `news`, ثم الفرق غير الأدمن.
+- **إضافة** الـ12 فريقاً الجدد بأكواد الدخول والشعارات.
+- لا يتم إنشاء مباريات تلقائياً — الأدمن يضغط زر "إنشاء البطولة" من لوحة الإدارة لتوزيع المجموعات وتوليد جدول الذهاب/الإياب.
 
-## 4. Main Pages & UI
+## 4. تغييرات الواجهة
+- إزالة صفحات Cup و UCL و League من التنقل واستبدالها بصفحة موحّدة **Tournament** (`/tournament`):
+  - تبويب "المجموعات": 3 جداول ترتيب + مباريات كل جولة مع قفل/فتح الجولة كما في النظام الحالي.
+  - تبويب "الإقصائيات": عرض bracket لربع/نصف/نهائي يظهر بعد انتهاء دور المجموعات (يولده الأدمن بزر "توليد الإقصائيات").
+- لوحة الإدارة:
+  - زر "إنشاء بطولة جديدة" → قرعة + توليد مباريات المجموعات.
+  - زر "توليد الإقصائيات" → بعد اكتمال المجموعات يحسب المتأهلين ويُنشئ مباريات QF.
+  - الحفاظ على نظام إدخال النتائج، تحكم الجولات، تعليق الفرق.
+- تحديث الصفحة الرئيسية: عرض ترتيب المجموعة التي ينتمي لها الفريق + آخر النتائج.
 
-### Homepage / Dashboard
-- Header with Messi (blonde) & Ronaldo (Madrid) images
-- Live scoreboard showing recent/upcoming matches
-- League standings table (points, wins, draws, losses, GD)
+## 5. منطق الحساب
+- إعادة احتساب الترتيب من المباريات بعد كل تعديل نتيجة (نفس النمط الحالي): النقاط، فارق الأهداف، الأهداف المسجَّلة، الأهداف المستقبلة.
+- ترتيب الثوالث لاختيار أفضل اثنين بنفس المعايير.
 
-### League Page
-- Full standings table sorted by points
-- Match results by round
-
-### Cup Page
-- Bracket view showing R16 → QF → SF → Final progression
-
-### UCL Page
-- Group tables (A, B, C, D) with standings
-- Group match results
-
-### Chat Room
-- Real-time team chat
-- Image upload support (Supabase storage)
-- Messages show team logo + coach name
-
-### News Page
-- Admin can post news/announcements
-- AI Journalist: auto-generate match reports from scores
-- AI Analyst: match predictions based on team stats
-
-## 5. Design Theme
-- **Dark glass/glassmorphism** theme throughout
-- Semi-transparent cards with blur backdrop
-- Neon accent colors
-- Arabic text support (RTL where needed)
-- Team logos displayed prominently everywhere
-
-## 6. Challenges System
-- Coaches can challenge other teams to matches
-- Accept/decline mechanic
-- Results tracked separately from tournaments
-
+## التفاصيل التقنية
+- ملفات جديدة: `src/pages/Tournament.tsx`, `src/lib/tournament.ts` (دوال القرعة، توليد جدول الذهاب/الإياب لمجموعة من 4، حساب الثوالث، توليد QF).
+- حذف ملفات: `src/pages/League.tsx`, `src/pages/Cup.tsx`, `src/pages/UCL.tsx` وإزالة مساراتها من `App.tsx` و `Layout.tsx`.
+- إعادة استخدام جدول `matches` كما هو: `tournament_type='group'` أو `'knockout'`, `group_name` ∈ {A,B,C}, `stage` ∈ {QF,SF,F}, `round` للجولات داخل المجموعة.
+- تعديل `Admin.tsx` و `Index.tsx`.
