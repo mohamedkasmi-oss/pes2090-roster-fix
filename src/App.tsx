@@ -8,9 +8,7 @@ import Layout from "@/components/Layout";
 import Login from "@/pages/Login";
 import Suspended from "@/pages/Suspended";
 import Index from "@/pages/Index";
-import League from "@/pages/League";
-import Cup from "@/pages/Cup";
-import UCL from "@/pages/UCL";
+import Tournament from "@/pages/Tournament";
 import Chat from "@/pages/Chat";
 import News from "@/pages/News";
 import Admin from "@/pages/Admin";
@@ -36,9 +34,7 @@ const AppRoutes = () => {
     <Layout>
       <Routes>
         <Route path="/" element={<Index />} />
-        <Route path="/league" element={<League />} />
-        <Route path="/cup" element={<Cup />} />
-        <Route path="/ucl" element={<UCL />} />
+        <Route path="/tournament" element={<Tournament />} />
         <Route path="/chat" element={<Chat />} />
         <Route path="/news" element={<News />} />
         <Route path="/admin" element={<Admin />} />
