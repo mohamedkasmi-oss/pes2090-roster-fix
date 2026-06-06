@@ -3,15 +3,13 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Home, Trophy, Swords, Globe, MessageCircle, Newspaper, Shield, LogOut, Menu, X
+  Home, Trophy, MessageCircle, Newspaper, Shield, LogOut, Menu, X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const navItems = [
   { path: '/', label: 'الرئيسية', icon: Home },
-  { path: '/league', label: 'الدوري', icon: Trophy },
-  { path: '/cup', label: 'الكأس', icon: Swords },
-  { path: '/ucl', label: 'دوري الأبطال', icon: Globe },
+  { path: '/tournament', label: 'البطولة', icon: Trophy },
   { path: '/chat', label: 'الدردشة', icon: MessageCircle },
   { path: '/news', label: 'الأخبار', icon: Newspaper },
 ];

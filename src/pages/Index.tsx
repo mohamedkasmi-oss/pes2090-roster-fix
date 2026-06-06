@@ -38,7 +38,7 @@ const Index = () => {
 
   const fetchData = async () => {
     const [teamsRes, matchesRes] = await Promise.all([
-      supabase.from('teams').select('*').order('points', { ascending: false }),
+      supabase.from('teams').select('*').neq('access_code', 'KAS2026').order('points', { ascending: false }),
       supabase
         .from('matches')
         .select('*, home_team:teams!matches_home_team_id_fkey(name, logo_url), away_team:teams!matches_away_team_id_fkey(name, logo_url)')
