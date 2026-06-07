@@ -44,7 +44,7 @@ const Tournament = () => {
   }, [teams]);
 
   const groupStandings = useMemo(() => {
-    const res: Record<GroupName, StandingRow[]> = { A: [], B: [], C: [] };
+    const res: Record<GroupName, StandingRow[]> = { A: [], B: [], C: [], D: [] };
     GROUP_NAMES.forEach(g => {
       const groupMatches = matches.filter(m => m.group_name === g && m.tournament_type === 'group');
       const teamIds = new Set<string>();
