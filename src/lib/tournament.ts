@@ -1,6 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 
-export const GROUP_NAMES = ['A', 'B', 'C'] as const;
+export const GROUP_NAMES = ['A', 'B', 'C', 'D'] as const;
 export type GroupName = (typeof GROUP_NAMES)[number];
 
 export interface MatchRow {
