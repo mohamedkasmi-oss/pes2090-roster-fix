@@ -30,7 +30,7 @@ const Admin = () => {
   };
 
   const groupStandings = useMemo(() => {
-    const res: Record<GroupName, StandingRow[]> = { A: [], B: [], C: [] };
+    const res: Record<GroupName, StandingRow[]> = { A: [], B: [], C: [], D: [] };
     const teamMap = new Map(teams.map(t => [t.id, t as TeamRow]));
     GROUP_NAMES.forEach(g => {
       const groupMatches = matches.filter(m => m.group_name === g && m.tournament_type === 'group');
