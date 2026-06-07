@@ -52,7 +52,7 @@ function buildGroupSchedule(ids: string[]): { home: string; away: string; round:
 }
 
 export async function generateTournament(teams: TeamRow[]) {
-  if (teams.length !== 12) throw new Error('يجب أن يكون عدد الفرق 12');
+  if (teams.length !== 16) throw new Error('يجب أن يكون عدد الفرق 16');
 
   // Wipe existing matches
   await supabase.from('matches').delete().neq('id', '00000000-0000-0000-0000-000000000000');
