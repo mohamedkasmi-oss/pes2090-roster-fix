@@ -1,6 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 
-export const GROUP_NAMES = ['A', 'B', 'C'] as const;
+export const GROUP_NAMES = ['A', 'B', 'C', 'D'] as const;
 export type GroupName = (typeof GROUP_NAMES)[number];
 
 export interface MatchRow {
@@ -52,7 +52,7 @@ function buildGroupSchedule(ids: string[]): { home: string; away: string; round:
 }
 
 export async function generateTournament(teams: TeamRow[]) {
-  if (teams.length !== 12) throw new Error('يجب أن يكون عدد الفرق 12');
+  if (teams.length !== 16) throw new Error('يجب أن يكون عدد الفرق 16');
 
   // Wipe existing matches
   await supabase.from('matches').delete().neq('id', '00000000-0000-0000-0000-000000000000');
@@ -152,31 +152,19 @@ export async function recalcTeamAggregates() {
 export async function generateKnockoutQF(
   groupStandings: Record<GroupName, StandingRow[]>,
 ) {
-  // Top 2 from each group + 2 best thirds
+  // Top 2 from each of 4 groups = 8 qualifiers
   const qualified: { team: TeamRow; rank: number; group: GroupName }[] = [];
   GROUP_NAMES.forEach(g => {
     const s = groupStandings[g];
     if (s[0]) qualified.push({ team: s[0].team, rank: 1, group: g });
     if (s[1]) qualified.push({ team: s[1].team, rank: 2, group: g });
   });
-  const thirds: { st: StandingRow; group: GroupName }[] = [];
-  GROUP_NAMES.forEach(g => {
-    if (groupStandings[g][2]) thirds.push({ st: groupStandings[g][2], group: g });
-  });
-  thirds.sort((x, y) => {
-    if (y.st.points !== x.st.points) return y.st.points - x.st.points;
-    if (y.st.gd !== x.st.gd) return y.st.gd - x.st.gd;
-    return y.st.gf - x.st.gf;
-  });
-  thirds.slice(0, 2).forEach(t => qualified.push({ team: t.st.team, rank: 3, group: t.group }));
 
   if (qualified.length !== 8) throw new Error('يجب اكتمال مباريات المجموعات');
 
-  // Pairings: 1st vs 2nd/3rd from other groups
+  // Pairings: 1st vs 2nd from other groups
   const firsts = qualified.filter(q => q.rank === 1);
-  const seconds = qualified.filter(q => q.rank === 2);
-  const thirdsQ = qualified.filter(q => q.rank === 3);
-  const lowerPool = [...seconds, ...thirdsQ];
+  const lowerPool = qualified.filter(q => q.rank === 2);
   // Shuffle lower pool, ensure no same-group pairing where possible
   for (let i = lowerPool.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
