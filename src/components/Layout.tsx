@@ -6,6 +6,8 @@ import {
   Home, Trophy, MessageCircle, Newspaper, Shield, LogOut, Menu, X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import logoAsset from '@/assets/pes2090-logo.jpg.asset.json';
+import bannerAsset from '@/assets/sidebar-banner.jpg.asset.json';
 
 const navItems = [
   { path: '/', label: 'الرئيسية', icon: Home },
@@ -24,16 +26,13 @@ const Layout = ({ children }: { children: ReactNode }) => {
       {/* Header */}
       <header className="glass-card-strong border-b border-border/30 sticky top-0 z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <Link to="/" className="flex items-center gap-3">
             <img
-              src={team?.logo_url || ''}
-              alt={team?.name}
-              className="w-8 h-8 object-contain"
+              src={logoAsset.url}
+              alt="PES 2090"
+              className="h-12 w-auto object-contain drop-shadow-[0_0_10px_rgba(0,255,102,0.5)]"
             />
-            <h1 className="font-orbitron text-lg font-bold text-primary neon-text-green hidden sm:block">
-              PES 2090
-            </h1>
-          </div>
+          </Link>
 
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-1">
@@ -126,6 +125,11 @@ const Layout = ({ children }: { children: ReactNode }) => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-6">
+        {/* Sidebar Banner */}
+        <div className="mb-6 rounded-xl overflow-hidden border border-primary/30 neon-glow-green relative">
+          <img src={bannerAsset.url} alt="PES 2090 Banner" className="w-full h-auto object-cover" />
+        </div>
+
         <motion.div
           key={location.pathname}
           initial={{ opacity: 0, y: 10 }}

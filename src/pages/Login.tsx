@@ -3,7 +3,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-import { Lock, Gamepad2 } from 'lucide-react';
+import { Lock } from 'lucide-react';
+import logoAsset from '@/assets/pes2090-logo.jpg.asset.json';
+import bgAsset from '@/assets/login-bg.jpg.asset.json';
 
 const Login = () => {
   const [code, setCode] = useState('');
@@ -23,25 +25,36 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" dir="rtl">
+    <div
+      className="min-h-screen flex items-center justify-center p-4 relative"
+      dir="rtl"
+      style={{
+        backgroundImage: `linear-gradient(rgba(7,13,20,0.55), rgba(7,13,20,0.75)), url(${bgAsset.url})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}
+    >
       <motion.div
         initial={{ opacity: 0, y: 30, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.6 }}
-        className="glass-card-strong neon-glow-green p-8 w-full max-w-md"
+        className="neon-glow-green p-8 w-full max-w-md rounded-2xl"
+        style={{
+          background: 'rgba(10, 20, 30, 0.65)',
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
+          border: '0.5px solid rgba(0, 255, 102, 0.4)',
+        }}
       >
-        <div className="text-center mb-8">
-          <motion.div
+        <div className="text-center mb-6">
+          <motion.img
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.2, type: 'spring' }}
-            className="w-20 h-20 mx-auto mb-4 rounded-full bg-primary/20 flex items-center justify-center"
-          >
-            <Gamepad2 className="w-10 h-10 text-primary" />
-          </motion.div>
-          <h1 className="text-3xl font-orbitron font-bold text-primary neon-text-green">
-            PES 2090
-          </h1>
+            src={logoAsset.url}
+            alt="PES 2090"
+            className="w-40 h-40 mx-auto object-contain drop-shadow-[0_0_25px_rgba(0,255,102,0.45)]"
+          />
           <p className="text-muted-foreground mt-2 font-cairo">عالم كرة القدم الافتراضي</p>
         </div>
 
@@ -70,7 +83,7 @@ const Login = () => {
 
           <Button
             type="submit"
-            className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-orbitron"
+            className="w-full btn-neon font-orbitron"
             disabled={isLoading || !code}
           >
             {isLoading ? '...' : 'دخول'}
