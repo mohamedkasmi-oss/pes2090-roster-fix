@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { motion } from 'framer-motion';
-import { Trophy, Swords, Users } from 'lucide-react';
+import { Swords, Users } from 'lucide-react';
+import trophyAsset from '@/assets/champions-trophy.jpg.asset.json';
 
 interface TeamStanding {
   id: string;
@@ -97,9 +98,9 @@ const Index = () => {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
-          { icon: Users, label: 'الفرق', value: '16', color: 'text-primary' },
-          { icon: Trophy, label: 'البطولات', value: '3', color: 'text-accent' },
-          { icon: Swords, label: 'المباريات', value: recentMatches.length.toString(), color: 'text-secondary' },
+          { type: 'icon' as const, icon: Users, label: 'الفرق', value: '16', color: 'text-primary' },
+          { type: 'trophy' as const, label: 'البطولات', value: '1', color: 'text-primary' },
+          { type: 'icon' as const, icon: Swords, label: 'المباريات', value: recentMatches.length.toString(), color: 'text-secondary' },
         ].map((stat, i) => (
           <motion.div
             key={stat.label}
@@ -108,11 +109,19 @@ const Index = () => {
             transition={{ delay: i * 0.1 }}
             className="glass-card p-4 flex items-center gap-4"
           >
-            <div className={`p-3 rounded-lg bg-muted/50 ${stat.color}`}>
-              <stat.icon className="w-6 h-6" />
-            </div>
+            {stat.type === 'trophy' ? (
+              <img
+                src={trophyAsset.url}
+                alt="Champions"
+                className="w-16 h-16 object-contain drop-shadow-[0_0_15px_rgba(0,255,102,0.6)]"
+              />
+            ) : (
+              <div className={`p-3 rounded-lg bg-muted/50 ${stat.color}`}>
+                <stat.icon className="w-6 h-6" />
+              </div>
+            )}
             <div>
-              <p className="text-2xl font-orbitron font-bold">{stat.value}</p>
+              <p className="text-2xl font-orbitron font-bold neon-text-green">{stat.value}</p>
               <p className="text-muted-foreground text-sm font-cairo">{stat.label}</p>
             </div>
           </motion.div>
