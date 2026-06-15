@@ -4,6 +4,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { motion } from 'framer-motion';
 import { Swords, Users } from 'lucide-react';
 import trophyAsset from '@/assets/champions-trophy.jpg.asset.json';
+import messiImg from '@/assets/messi.jpg';
+import ronaldoImg from '@/assets/ronaldo.jpg';
 
 interface TeamStanding {
   id: string;
@@ -74,7 +76,7 @@ const Index = () => {
         <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-secondary/5" />
         <div className="relative z-10 flex items-center justify-center gap-8">
           <img
-            src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Lionel_Messi_20180626.jpg/220px-Lionel_Messi_20180626.jpg"
+            src={messiImg}
             alt="Messi"
             className="w-20 h-20 rounded-full object-cover border-2 border-primary/50 hidden sm:block"
           />
@@ -88,7 +90,7 @@ const Index = () => {
             </p>
           </div>
           <img
-            src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Cristiano_Ronaldo_2018.jpg/220px-Cristiano_Ronaldo_2018.jpg"
+            src={ronaldoImg}
             alt="Ronaldo"
             className="w-20 h-20 rounded-full object-cover border-2 border-accent/50 hidden sm:block"
           />
