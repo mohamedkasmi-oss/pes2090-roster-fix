@@ -36,18 +36,13 @@ export interface StandingRow {
   points: number;
 }
 
-// 4-team home-and-away schedule, 6 matchdays
+// World Cup style single round-robin: 3 matchdays, 6 matches per group
 function buildGroupSchedule(ids: string[]): { home: string; away: string; round: number }[] {
   const [a, b, c, d] = ids;
   return [
-    // Leg 1
     { home: a, away: d, round: 1 }, { home: b, away: c, round: 1 },
     { home: d, away: c, round: 2 }, { home: a, away: b, round: 2 },
     { home: b, away: d, round: 3 }, { home: c, away: a, round: 3 },
-    // Leg 2 (reverse)
-    { home: d, away: a, round: 4 }, { home: c, away: b, round: 4 },
-    { home: c, away: d, round: 5 }, { home: b, away: a, round: 5 },
-    { home: d, away: b, round: 6 }, { home: a, away: c, round: 6 },
   ];
 }
 
