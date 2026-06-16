@@ -176,7 +176,7 @@ const Tournament = () => {
             </p>
           ) : (
             <>
-              <div className="grid gap-4 md:grid-cols-3">
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 {GROUP_NAMES.map(g => (
                   <div key={g} className="space-y-2">
                     <h2 className="font-orbitron font-bold text-accent">مجموعة {g}</h2>
