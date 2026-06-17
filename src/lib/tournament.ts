@@ -36,28 +36,47 @@ export interface StandingRow {
   points: number;
 }
 
-// World Cup style single round-robin: 3 matchdays, 6 matches per group
+// Round-robin schedule (circle method). Works for any group size; for odd n, one team gets a bye each round.
 function buildGroupSchedule(ids: string[]): { home: string; away: string; round: number }[] {
-  const [a, b, c, d] = ids;
-  return [
-    { home: a, away: d, round: 1 }, { home: b, away: c, round: 1 },
-    { home: d, away: c, round: 2 }, { home: a, away: b, round: 2 },
-    { home: b, away: d, round: 3 }, { home: c, away: a, round: 3 },
-  ];
+  const teams: (string | null)[] = [...ids];
+  if (teams.length % 2 === 1) teams.push(null); // BYE
+  const n = teams.length;
+  const rounds = n - 1;
+  const half = n / 2;
+  const arr = [...teams];
+  const out: { home: string; away: string; round: number }[] = [];
+  for (let r = 0; r < rounds; r++) {
+    for (let i = 0; i < half; i++) {
+      const h = arr[i];
+      const a = arr[n - 1 - i];
+      if (h && a) {
+        // alternate home/away for fairness
+        if ((r + i) % 2 === 0) out.push({ home: h, away: a, round: r + 1 });
+        else out.push({ home: a, away: h, round: r + 1 });
+      }
+    }
+    // rotate (fix first, rotate the rest)
+    const fixed = arr[0];
+    const rest = arr.slice(1);
+    rest.unshift(rest.pop()!);
+    arr.splice(0, arr.length, fixed, ...rest);
+  }
+  return out;
 }
 
 export async function generateTournament(teams: TeamRow[]) {
-  if (teams.length !== 16) throw new Error('يجب أن يكون عدد الفرق 16');
+  if (teams.length !== 20) throw new Error('يجب أن يكون عدد الفرق 20');
 
   // Wipe existing matches
   await supabase.from('matches').delete().neq('id', '00000000-0000-0000-0000-000000000000');
 
-  // Random draw
+  // Random draw: 4 groups × 5 teams
   const shuffled = [...teams].sort(() => Math.random() - 0.5);
   const rows: any[] = [];
+  const perGroup = 5;
 
   GROUP_NAMES.forEach((g, gi) => {
-    const groupTeams = shuffled.slice(gi * 4, gi * 4 + 4).map(t => t.id);
+    const groupTeams = shuffled.slice(gi * perGroup, gi * perGroup + perGroup).map(t => t.id);
     const schedule = buildGroupSchedule(groupTeams);
     schedule.forEach(s => {
       rows.push({
@@ -83,6 +102,7 @@ export async function generateTournament(teams: TeamRow[]) {
     .update({ points: 0, wins: 0, draws: 0, losses: 0, goals_for: 0, goals_against: 0 })
     .neq('id', '00000000-0000-0000-0000-000000000000');
 }
+
 
 export function computeStandings(
   teams: TeamRow[],
