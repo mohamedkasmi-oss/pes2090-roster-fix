@@ -7,6 +7,8 @@ import trophyAsset from '@/assets/champions-trophy.jpg.asset.json';
 import messiHeroVideo from '@/assets/messi-hero.mp4.asset.json';
 import messiImg from '@/assets/messi.jpg';
 import ronaldoImg from '@/assets/ronaldo.jpg';
+import messiChampion from '@/assets/messi-champion.jpg.asset.json';
+import ronaldoEmperor from '@/assets/ronaldo-emperor.png.asset.json';
 
 interface TeamStanding {
   id: string;
