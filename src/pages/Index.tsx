@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { motion } from 'framer-motion';
 import { Swords, Users } from 'lucide-react';
 import trophyAsset from '@/assets/champions-trophy.jpg.asset.json';
+import messiHeroVideo from '@/assets/messi-hero.mp4.asset.json';
 import messiImg from '@/assets/messi.jpg';
 import ronaldoImg from '@/assets/ronaldo.jpg';
 
