@@ -53,6 +53,7 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <AppRoutes />
+          <BackgroundMusic />
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
