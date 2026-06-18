@@ -68,13 +68,24 @@ const Index = () => {
 
   return (
     <div className="space-y-8">
-      {/* Hero Header */}
+      {/* Hero Header with Video Background */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         className="glass-card neon-glow-green p-6 text-center relative overflow-hidden"
       >
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-secondary/5" />
+        {/* Video Background */}
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover z-0"
+          src={messiHeroVideo.url}
+        />
+        {/* Dark Overlay for readability */}
+        <div className="absolute inset-0 bg-black/60 z-[1]" />
+
         <div className="relative z-10 flex items-center justify-center gap-8">
           <img
             src={messiImg}
