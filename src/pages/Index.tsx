@@ -7,6 +7,8 @@ import trophyAsset from '@/assets/champions-trophy.jpg.asset.json';
 import messiHeroVideo from '@/assets/messi-hero.mp4.asset.json';
 import messiImg from '@/assets/messi.jpg';
 import ronaldoImg from '@/assets/ronaldo.jpg';
+import messiChampion from '@/assets/messi-champion.jpg.asset.json';
+import ronaldoEmperor from '@/assets/ronaldo-emperor.png.asset.json';
 
 interface TeamStanding {
   id: string;
@@ -165,6 +167,61 @@ const Index = () => {
           </div>
         </div>
       )}
+
+      {/* Legends Gallery */}
+      <div className="space-y-3">
+        <h2 className="text-xl font-orbitron font-bold text-foreground text-center neon-text-green">
+          أساطير كرة القدم
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            whileHover={{ scale: 1.02 }}
+            transition={{ duration: 0.5 }}
+            className="glass-card overflow-hidden relative group cursor-pointer neon-glow-green"
+          >
+            <div className="aspect-[3/4] overflow-hidden">
+              <img
+                src={messiChampion.url}
+                alt="Messi - بطل العالم"
+                loading="lazy"
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              />
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+            <div className="absolute bottom-0 inset-x-0 p-4 text-center">
+              <h3 className="font-orbitron font-bold text-2xl text-primary neon-text-green">MESSI</h3>
+              <p className="font-cairo text-sm text-white/90">بطل العالم 🏆 قطر 2022</p>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, x: 30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            whileHover={{ scale: 1.02 }}
+            transition={{ duration: 0.5 }}
+            className="glass-card overflow-hidden relative group cursor-pointer"
+          >
+            <div className="aspect-[3/4] overflow-hidden">
+              <img
+                src={ronaldoEmperor.url}
+                alt="Ronaldo - إمبراطور البرتغال"
+                loading="lazy"
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              />
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+            <div className="absolute bottom-0 inset-x-0 p-4 text-center">
+              <h3 className="font-orbitron font-bold text-2xl text-accent">RONALDO</h3>
+              <p className="font-cairo text-sm text-white/90">إمبراطور البرتغال 🇵🇹</p>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+
 
       {/* Standings Preview */}
       <div className="space-y-3">
