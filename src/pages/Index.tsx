@@ -13,6 +13,7 @@ import ronaldoEmperor from '@/assets/ronaldo-emperor.png.asset.json';
 interface TeamStanding {
   id: string;
   name: string;
+  coach_name: string;
   logo_url: string | null;
   points: number;
   wins: number;
@@ -114,7 +115,7 @@ const Index = () => {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
-          { type: 'icon' as const, icon: Users, label: 'الفرق', value: '16', color: 'text-primary' },
+          { type: 'icon' as const, icon: Users, label: 'اللاعبون', value: '20', color: 'text-primary' },
           { type: 'trophy' as const, label: 'البطولات', value: '1', color: 'text-primary' },
           { type: 'icon' as const, icon: Swords, label: 'المباريات', value: recentMatches.length.toString(), color: 'text-secondary' },
         ].map((stat, i) => (
@@ -151,16 +152,16 @@ const Index = () => {
           <div className="grid gap-3">
             {recentMatches.map((match) => (
               <div key={match.id} className="glass-card p-4 flex items-center justify-between">
-                <div className="flex items-center gap-2 flex-1 justify-end">
-                  <span className="font-cairo text-sm">{match.home_team?.name}</span>
-                  <img src={match.home_team?.logo_url || ''} alt="" className="w-6 h-6 object-contain" />
+                <div className="flex flex-col items-end flex-1 leading-tight">
+                  <span className="font-cairo text-sm font-bold">{(match.home_team as any)?.coach_name}</span>
+                  <span className="text-[11px] text-muted-foreground">{match.home_team?.name}</span>
                 </div>
                 <div className="px-4 font-orbitron font-bold text-primary">
                   {match.home_score} - {match.away_score}
                 </div>
-                <div className="flex items-center gap-2 flex-1">
-                  <img src={match.away_team?.logo_url || ''} alt="" className="w-6 h-6 object-contain" />
-                  <span className="font-cairo text-sm">{match.away_team?.name}</span>
+                <div className="flex flex-col items-start flex-1 leading-tight">
+                  <span className="font-cairo text-sm font-bold">{(match.away_team as any)?.coach_name}</span>
+                  <span className="text-[11px] text-muted-foreground">{match.away_team?.name}</span>
                 </div>
               </div>
             ))}
@@ -250,9 +251,9 @@ const Index = () => {
                 >
                   <td className="p-3 font-orbitron text-muted-foreground">{i + 1}</td>
                   <td className="p-3">
-                    <div className="flex items-center gap-2">
-                      <img src={t.logo_url || ''} alt="" className="w-5 h-5 object-contain" />
-                      <span className="font-cairo">{t.name}</span>
+                    <div className="flex flex-col leading-tight">
+                      <span className="font-cairo font-bold">{t.coach_name}</span>
+                      <span className="text-[11px] text-muted-foreground">{t.name}</span>
                     </div>
                   </td>
                   <td className="p-3 text-center">{t.wins}</td>
