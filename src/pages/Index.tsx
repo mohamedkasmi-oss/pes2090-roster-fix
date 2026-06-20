@@ -30,8 +30,8 @@ interface Match {
   tournament_type: string;
   stage: string | null;
   is_played: boolean;
-  home_team: { name: string; logo_url: string | null } | null;
-  away_team: { name: string; logo_url: string | null } | null;
+  home_team: { name: string; coach_name: string; logo_url: string | null } | null;
+  away_team: { name: string; coach_name: string; logo_url: string | null } | null;
 }
 
 const Index = () => {
@@ -48,7 +48,7 @@ const Index = () => {
       supabase.from('teams').select('*').neq('access_code', 'KAS2026').order('points', { ascending: false }),
       supabase
         .from('matches')
-        .select('*, home_team:teams!matches_home_team_id_fkey(name, logo_url), away_team:teams!matches_away_team_id_fkey(name, logo_url)')
+        .select('*, home_team:teams!matches_home_team_id_fkey(name, coach_name, logo_url), away_team:teams!matches_away_team_id_fkey(name, coach_name, logo_url)')
         .eq('is_visible', true)
         .eq('is_played', true)
         .order('created_at', { ascending: false })
