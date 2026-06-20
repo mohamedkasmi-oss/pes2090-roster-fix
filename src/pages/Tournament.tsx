@@ -6,19 +6,29 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import {
-  computeStandings, GROUP_NAMES, GroupName, MatchRow, recalcTeamAggregates, StandingRow, TeamRow,
+  computeSwissStandings, MatchRow, recalcTeamAggregates,
+  SwissStanding, TeamRow, MAX_SWISS_ROUNDS,
 } from '@/lib/tournament';
 
 const stageLabel: Record<string, string> = { QF: 'ربع النهائي', SF: 'نصف النهائي', F: 'النهائي' };
+const LS_KEY = 'pes2090.scoreDrafts.v1';
+
+const loadDrafts = (): Record<string, { home: string; away: string }> => {
+  try { return JSON.parse(localStorage.getItem(LS_KEY) || '{}'); } catch { return {}; }
+};
+const saveDrafts = (d: Record<string, { home: string; away: string }>) => {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(d)); } catch {}
+};
 
 const Tournament = () => {
   const { isAdmin } = useAuth();
   const [teams, setTeams] = useState<TeamRow[]>([]);
   const [matches, setMatches] = useState<MatchRow[]>([]);
-  const [scores, setScores] = useState<Record<string, { home: string; away: string }>>({});
+  const [scores, setScores] = useState<Record<string, { home: string; away: string }>>(loadDrafts);
   const [selectedRound, setSelectedRound] = useState(1);
 
   useEffect(() => { fetchAll(); }, []);
+  useEffect(() => { saveDrafts(scores); }, [scores]);
 
   const fetchAll = async () => {
     const [t, m] = await Promise.all([
@@ -43,31 +53,26 @@ const Tournament = () => {
     return m;
   }, [teams]);
 
-  const groupStandings = useMemo(() => {
-    const res: Record<GroupName, StandingRow[]> = { A: [], B: [], C: [], D: [] };
-    GROUP_NAMES.forEach(g => {
-      const groupMatches = matches.filter(m => m.group_name === g && m.tournament_type === 'group');
-      const teamIds = new Set<string>();
-      groupMatches.forEach(m => {
-        if (m.home_team_id) teamIds.add(m.home_team_id);
-        if (m.away_team_id) teamIds.add(m.away_team_id);
-      });
-      const groupTeams = Array.from(teamIds).map(id => teamMap.get(id)).filter(Boolean) as TeamRow[];
-      res[g] = computeStandings(groupTeams, groupMatches);
-    });
-    return res;
-  }, [matches, teamMap]);
+  const standings = useMemo<SwissStanding[]>(
+    () => computeSwissStandings(teams, matches),
+    [teams, matches],
+  );
 
-  const groupMatches = matches.filter(m => m.tournament_type === 'group');
+  const swissMatches = matches.filter(m => m.tournament_type === 'swiss');
   const knockoutMatches = matches.filter(m => m.tournament_type === 'knockout');
-  const rounds = Array.from(new Set(groupMatches.map(m => m.round!))).sort((a, b) => a - b);
+  const rounds = Array.from(new Set(swissMatches.map(m => m.round!))).sort((a, b) => a - b);
+
+  useEffect(() => {
+    if (rounds.length && !rounds.includes(selectedRound)) setSelectedRound(rounds[rounds.length - 1]);
+  }, [rounds.join(','), selectedRound]);
+
   const roundVisibility = useMemo(() => {
     const v: Record<number, boolean> = {};
-    groupMatches.forEach(m => {
+    swissMatches.forEach(m => {
       if (m.round != null) v[m.round] = (v[m.round] || false) || m.is_visible;
     });
     return v;
-  }, [groupMatches]);
+  }, [swissMatches]);
 
   const saveScore = async (matchId: string) => {
     const s = scores[matchId];
@@ -82,18 +87,23 @@ const Tournament = () => {
     await fetchAll();
   };
 
+  // Renders a player chip: real name (bold) + flag/nation small under/beside
+  const playerChip = (t: TeamRow | undefined, align: 'start' | 'end' = 'start') => (
+    <div className={`flex flex-col ${align === 'end' ? 'items-end' : 'items-start'} leading-tight`}>
+      <span className="font-cairo text-sm font-bold">{t?.coach_name || '—'}</span>
+      <span className="text-[11px] text-muted-foreground font-cairo">{t?.name}</span>
+    </div>
+  );
+
   const renderMatch = (match: MatchRow) => {
-    const home = match.home_team_id ? teamMap.get(match.home_team_id) : null;
-    const away = match.away_team_id ? teamMap.get(match.away_team_id) : null;
+    const home = match.home_team_id ? teamMap.get(match.home_team_id) : undefined;
+    const away = match.away_team_id ? teamMap.get(match.away_team_id) : undefined;
     return (
       <div key={match.id} className="glass-card p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 flex-1 justify-end">
-            <span className="font-cairo text-sm">{home?.name}</span>
-            <img src={home?.logo_url || ''} alt="" className="w-6 h-6 object-contain" />
-          </div>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex-1 flex justify-end">{playerChip(home, 'end')}</div>
           {isAdmin ? (
-            <div className="flex items-center gap-2 px-4">
+            <div className="flex items-center gap-2 px-2">
               <Input type="number" min="0" className="w-12 text-center bg-muted/50"
                 value={scores[match.id]?.home ?? ''}
                 onChange={e => setScores(p => ({ ...p, [match.id]: { home: e.target.value, away: p[match.id]?.away || '' } }))} />
@@ -112,46 +122,45 @@ const Tournament = () => {
           ) : (
             <div className="px-4 text-muted-foreground font-orbitron">vs</div>
           )}
-          <div className="flex items-center gap-2 flex-1">
-            <img src={away?.logo_url || ''} alt="" className="w-6 h-6 object-contain" />
-            <span className="font-cairo text-sm">{away?.name}</span>
-          </div>
+          <div className="flex-1">{playerChip(away, 'start')}</div>
         </div>
       </div>
     );
   };
 
-  const standingsTable = (rows: StandingRow[]) => (
+  const standingsTable = (rows: SwissStanding[]) => (
     <div className="glass-card overflow-hidden">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-border/30 text-muted-foreground font-cairo">
             <th className="p-2 text-right">#</th>
-            <th className="p-2 text-right">الفريق</th>
+            <th className="p-2 text-right">اللاعب</th>
             <th className="p-2 text-center">لعب</th>
             <th className="p-2 text-center">ف</th>
-            <th className="p-2 text-center">ت</th>
             <th className="p-2 text-center">خ</th>
             <th className="p-2 text-center">+/-</th>
-            <th className="p-2 text-center font-bold text-primary">نقاط</th>
+            <th className="p-2 text-center">الحالة</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((s, i) => (
-            <tr key={s.team.id} className={`border-b border-border/20 ${i < 2 ? 'bg-primary/5' : i === 2 ? 'bg-accent/5' : ''}`}>
+            <tr key={s.team.id} className={`border-b border-border/20 ${s.qualified ? 'bg-primary/10' : s.eliminated ? 'bg-destructive/10' : ''}`}>
               <td className="p-2 font-orbitron">{i + 1}</td>
               <td className="p-2">
-                <div className="flex items-center gap-2">
-                  <img src={s.team.logo_url || ''} alt="" className="w-5 h-5 object-contain" />
-                  <span className="font-cairo">{s.team.name}</span>
+                <div className="flex flex-col leading-tight">
+                  <span className="font-cairo font-bold">{s.team.coach_name}</span>
+                  <span className="text-[11px] text-muted-foreground">{s.team.name}</span>
                 </div>
               </td>
               <td className="p-2 text-center">{s.played}</td>
-              <td className="p-2 text-center">{s.wins}</td>
-              <td className="p-2 text-center">{s.draws}</td>
-              <td className="p-2 text-center">{s.losses}</td>
+              <td className="p-2 text-center text-primary font-bold">{s.wins}</td>
+              <td className="p-2 text-center text-destructive">{s.losses}</td>
               <td className="p-2 text-center">{s.gd > 0 ? `+${s.gd}` : s.gd}</td>
-              <td className="p-2 text-center font-orbitron font-bold text-primary">{s.points}</td>
+              <td className="p-2 text-center text-xs font-cairo">
+                {s.qualified ? <span className="text-primary">🟢 متأهل</span>
+                  : s.eliminated ? <span className="text-destructive">🔴 مستبعد</span>
+                  : <span className="text-muted-foreground">نشط</span>}
+              </td>
             </tr>
           ))}
         </tbody>
@@ -159,30 +168,51 @@ const Tournament = () => {
     </div>
   );
 
+  // Knockout bracket layout
+  const renderBracket = () => {
+    const byStage = (s: string) => knockoutMatches.filter(m => m.stage === s);
+    const qf = byStage('QF'), sf = byStage('SF'), f = byStage('F');
+    if (knockoutMatches.length === 0) {
+      return <p className="text-center text-muted-foreground font-cairo py-12">الأدوار الإقصائية لم تبدأ بعد.</p>;
+    }
+    return (
+      <div className="grid md:grid-cols-3 gap-4">
+        <div className="space-y-2">
+          <h3 className="font-orbitron font-bold text-accent text-center">ربع النهائي</h3>
+          {qf.map(renderMatch)}
+        </div>
+        <div className="space-y-2">
+          <h3 className="font-orbitron font-bold text-accent text-center">نصف النهائي</h3>
+          {sf.length ? sf.map(renderMatch) : <p className="text-center text-muted-foreground text-sm font-cairo py-4">—</p>}
+        </div>
+        <div className="space-y-2">
+          <h3 className="font-orbitron font-bold text-primary text-center neon-text-green">النهائي 🏆</h3>
+          {f.length ? f.map(renderMatch) : <p className="text-center text-muted-foreground text-sm font-cairo py-4">—</p>}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-orbitron font-bold text-primary neon-text-green">🏆 البطولة</h1>
+      <h1 className="text-2xl font-orbitron font-bold text-primary neon-text-green">🏆 البطولة — النظام السويسري</h1>
 
-      <Tabs defaultValue="groups" className="space-y-4">
+      <Tabs defaultValue="swiss" className="space-y-4">
         <TabsList className="glass-card">
-          <TabsTrigger value="groups" className="font-cairo">المجموعات</TabsTrigger>
+          <TabsTrigger value="swiss" className="font-cairo">السويسرية</TabsTrigger>
           <TabsTrigger value="knockout" className="font-cairo">الإقصائيات</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="groups" className="space-y-6">
-          {groupMatches.length === 0 ? (
+        <TabsContent value="swiss" className="space-y-6">
+          {swissMatches.length === 0 ? (
             <p className="text-center text-muted-foreground font-cairo py-12">
               لم تُنشأ البطولة بعد. على المنظم بدؤها من لوحة الإدارة.
             </p>
           ) : (
             <>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                {GROUP_NAMES.map(g => (
-                  <div key={g} className="space-y-2">
-                    <h2 className="font-orbitron font-bold text-accent">مجموعة {g}</h2>
-                    {standingsTable(groupStandings[g])}
-                  </div>
-                ))}
+              <div>
+                <h2 className="font-orbitron font-bold text-accent mb-2">جدول الترتيب العام</h2>
+                {standingsTable(standings)}
               </div>
 
               {rounds.length > 0 && (
@@ -190,7 +220,7 @@ const Tournament = () => {
                   {rounds.map(r => (
                     <Button key={r} size="sm" variant={selectedRound === r ? 'default' : 'outline'}
                       onClick={() => setSelectedRound(r)} className="font-orbitron text-xs">
-                      الجولة {r} {!roundVisibility[r] && '🔒'}
+                      الجولة {r}/{MAX_SWISS_ROUNDS} {!roundVisibility[r] && '🔒'}
                     </Button>
                   ))}
                 </div>
@@ -200,21 +230,12 @@ const Tournament = () => {
                 <div className="glass-card p-8 text-center">
                   <p className="text-2xl mb-2">🔒</p>
                   <p className="font-cairo text-muted-foreground text-lg">
-                    الجولة {selectedRound} مغلقة - بانتظار إشارة المنظم
+                    الجولة {selectedRound} مغلقة — بانتظار إشارة المنظم
                   </p>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {GROUP_NAMES.map(g => {
-                    const ms = groupMatches.filter(m => m.round === selectedRound && m.group_name === g);
-                    if (ms.length === 0) return null;
-                    return (
-                      <div key={g} className="space-y-2">
-                        <h3 className="font-orbitron text-sm text-muted-foreground">مجموعة {g}</h3>
-                        {ms.map(renderMatch)}
-                      </div>
-                    );
-                  })}
+                <div className="space-y-3">
+                  {swissMatches.filter(m => m.round === selectedRound).map(renderMatch)}
                 </div>
               )}
             </>
@@ -222,22 +243,7 @@ const Tournament = () => {
         </TabsContent>
 
         <TabsContent value="knockout" className="space-y-6">
-          {knockoutMatches.length === 0 ? (
-            <p className="text-center text-muted-foreground font-cairo py-12">
-              الأدوار الإقصائية لم تبدأ بعد.
-            </p>
-          ) : (
-            (['QF', 'SF', 'F'] as const).map(stage => {
-              const ms = knockoutMatches.filter(m => m.stage === stage);
-              if (ms.length === 0) return null;
-              return (
-                <div key={stage} className="space-y-2">
-                  <h2 className="font-orbitron font-bold text-accent">{stageLabel[stage]}</h2>
-                  {ms.map(renderMatch)}
-                </div>
-              );
-            })
-          )}
+          {renderBracket()}
         </TabsContent>
       </Tabs>
     </div>
