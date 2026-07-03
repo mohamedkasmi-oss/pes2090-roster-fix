@@ -115,7 +115,7 @@ const Index = () => {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
-          { type: 'icon' as const, icon: Users, label: 'اللاعبون', value: '20', color: 'text-primary' },
+          { type: 'icon' as const, icon: Users, label: 'اللاعبون', value: '10', color: 'text-primary' },
           { type: 'trophy' as const, label: 'البطولات', value: '1', color: 'text-primary' },
           { type: 'icon' as const, icon: Swords, label: 'المباريات', value: recentMatches.length.toString(), color: 'text-secondary' },
         ].map((stat, i) => (
